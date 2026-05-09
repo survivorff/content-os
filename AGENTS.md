@@ -30,7 +30,8 @@
 | `douyin-scripter` | 把核心观点写成 2-3 分钟口播脚本 | 可选，按 inbox 里 `platforms` |
 | `hook-polisher` | 单独打磨每个版本的第一句/开头 | 所有平台版本生成后、quality-gate 前 |
 | `quality-gate` | 按 checklist 终审，不合格给出 diff 或打回 | 发布前最后一道 |
-| `publish-dispatcher` | 写入 `queue/schedule.json`，触发发布或提醒 | quality-gate 通过后 |
+| `blog-publisher` | **真正**把 blog 发到 blog.frankfu.cloud（唯一能自动发布的 skill） | quality-gate 通过后，在 publish-dispatcher 之前 |
+| `publish-dispatcher` | 写入 `queue/schedule.json`，触发 X/小红书/抖音的"到点提醒" | blog-publisher 之后 |
 
 skills 目录：`content-os/skills/<name>/SKILL.md`
 
@@ -119,22 +120,40 @@ skills 目录：`content-os/skills/<name>/SKILL.md`
   - B) 退回源文调整再跑一遍
   - C) 强制通过（加备注说明原因）
 
-### Step 7 — Publish Dispatcher
+### Step 7 — Blog Publisher（真正发博客）
+
+读 `skills/blog-publisher/SKILL.md`。如果 blog 在 platforms 里 + quality-gate 通过：
+
+- 把 `generated/<slug>/blog.md` 复制到 `/home/admin/blog/src/data/blog/<slug>.md`
+- git commit + push blog 仓库
+- 更新 `meta.json.published.blog` = ISO 时间
+- blog 网站会在 1-2 分钟后自动上线
+
+**这是 content-os 里唯一真正"自动发布"的 skill**。
+
+### Step 8 — Publish Dispatcher（其他平台 = 到点提醒）
 
 读 `skills/publish-dispatcher/SKILL.md`。
 
-- 写入 `queue/schedule.json`（追加条目，不要覆盖整个文件）
-- 如果发布触发条件已满足（例如 `schedule.blog <= now`），执行对应发布命令或提示手动操作
-- 更新 `contents/<slug>/meta.json` 的 `published` 字段
+- 对 X / 小红书 / 抖音：**只写入 `queue/schedule.json` 作为提醒计划**，不真发
+- 不在 platforms 里的平台跳过
+- 到时间后用 cron 在 Lark 推送提醒："该发 X Thread 了，markdown 在 <path>"
 
-### Step 8 — 汇报
+**规则**：
+- blog 的发布由 blog-publisher 完成，publish-dispatcher 不管 blog
+- 其他平台一律 manual 模式（mode: "manual"）
+- 不要假装有 X API credits 或小红书 API —— **没有就是没有**
+
+### Step 9 — 汇报
 
 给用户一份简报：
 - 入口想法：XXX
-- 选用的 platforms：[...]
-- 生成文件路径：[...]
-- 已排期时间：[...]
-- 需要用户手动做的事：[...]
+- blog：**已上线** https://blog.frankfu.cloud/posts/<slug>
+- X Thread：✅ 已生成，到点（YYYY-MM-DD HH:MM）Lark 会提醒你去发
+- 小红书：同上
+- GitHub content-os：commit <hash>
+- GitHub blog：commit <hash>
+- 需要你手动做的事：<列表>
 
 ---
 
