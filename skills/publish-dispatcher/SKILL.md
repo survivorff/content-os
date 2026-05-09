@@ -65,6 +65,32 @@ triggers:
 }
 ```
 
+### 4b. 注册 OpenClaw cron 任务（到点自动在 Lark 提醒）
+
+对每个 manual 平台，调用 **`cron` 工具**（OpenClaw agent 原生工具）给**自己**排一个未来时点的提醒任务。
+
+**任务 payload 示例**（X Thread 的提醒）：
+
+```json
+{
+  "name": "remind-<slug>-x-thread",
+  "enabled": true,
+  "schedule": {"kind": "at", "at": "2026-05-12T20:00:00+08:00"},
+  "payload": {
+    "kind": "agentTurn",
+    "message": "到点了：该发 `<slug>` 的 X Thread。\n\n请在 Lark 里把 generated/<slug>/x-thread.md 的全部 N 条推文 + CTA 贴给用户，让他去 x.com 手动发。贴完后告诉他发完回复「x 发完了」，你更新 meta.json.published.x-thread = 当前时间。"
+  },
+  "delivery": {"mode": "announce", "channel": "feishu"},
+  "deleteAfterRun": true
+}
+```
+
+类似地为小红书（`D+1 12:00`）、抖音（如果有）注册。
+
+**这样做的结果**：到点时 OpenClaw agent 会被唤醒，读这条 message，然后自动在 Lark 里给用户发提醒 + 完整 markdown 内容（按 AGENTS.md 里的"Final Lark report format"）。
+
+**退化方案**：如果 cron-tool 调用失败，至少把 queue/schedule.json 写全，用户可以手动用 crontab 跑。
+
 ### 5. 更新 meta.json
 
 ```json

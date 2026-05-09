@@ -31,25 +31,108 @@ Once the user gives you an idea and doesn't ask for "just an outline" or "just t
 - `topic-scout` returns `verdict: kill` → report why and ask: kill or retry with different angle?
 - `topic-scout` returns `verdict: need-more-info` → ask the specific questions from scout.md
 - `quality-gate` returns `rejected` on any platform → show the report, give user 3 options (A: let me fix, B: you fix, C: force through)
-- You hit a real error (git push fails, file not found, API error)
+- You hit a real error (git push fails, file not found, API error) — but do NOT give up silently. Always try to complete remaining steps and report the partial state.
 
 **What to do with risks/warnings scout flags**:
 
 Scout will often write risk notes like "needs more detail on X" or "make sure to redact Y". These are **warnings for the author to later improve**, NOT blockers. **Keep running the pipeline**. The blog-writer will do its best with available info. The author can refine in the next iteration.
 
-**Reply cadence on Lark**:
+---
 
-- First message after receiving idea (~10s): "收到，开始跑 [slug]。预计 10-15 分钟。"
-- After quality-gate: short status ("✅ 3/3 approved" or "⚠️ xhs 有 1 warn，继续发布")
-- Final message after blog-publisher + publish-dispatcher:
-  ```
-  ✅ 跑完了
-  Blog: 已发 https://blog.frankfu.cloud/posts/<slug>
-  X Thread: 2026-05-12 20:00 提醒你
-  小红书: 2026-05-13 12:00 提醒你
-  GitHub: <commit-url>
-  ```
+## 📬 Final Lark report format (CRITICAL — this is what the user actually sees)
 
-**Fallback to normal skills**:
+The user is on mobile or a desk in a meeting. They will NOT ssh into the VM to `cat` files. So at the end of every completed pipeline, your final Lark message MUST include **the full content of the manual-publish platforms** (X Thread / 小红书), so the user can copy-paste from Lark directly into the platforms.
+
+**Structure of the final message:**
+
+```
+✅ 跑完了：<标题>
+
+━━━━━━━━━━━━━━━━━━
+📝 Blog（已自动发布）
+━━━━━━━━━━━━━━━━━━
+🔗 https://blog.frankfu.cloud/posts/<slug>/
+Commit: github.com/survivorff/blog/commit/<hash>
+
+━━━━━━━━━━━━━━━━━━
+🐦 X Thread（手动发，共 N 条）
+━━━━━━━━━━━━━━━━━━
+
+1/N
+<推文 1 原文>
+
+2/N
+<推文 2 原文>
+
+...
+
+N/N (CTA)
+<推文 N 原文，含博客链接>
+
+━━━━━━━━━━━━━━━━━━
+📕 小红书（手动发）
+━━━━━━━━━━━━━━━━━━
+
+【标题】
+<小红书标题原文>
+
+【正文】
+<小红书正文原文，完整复制>
+
+【标签】
+#tag1 #tag2 ...
+
+【图文建议】
+- 封面：<建议>
+- 正文图：<建议>
+
+━━━━━━━━━━━━━━━━━━
+📊 Quality / Status
+━━━━━━━━━━━━━━━━━━
+- blog: ✅ approved
+- x-thread: ✅ approved
+- 小红书: ⚠️ approved_with_notes (1 warn)
+
+GitHub content-os: <commit-url>
+```
+
+**Rules for the final report:**
+
+1. **ALWAYS include full X Thread and 小红书 text** — don't say "markdown is at /path/". The user is not in a terminal.
+2. **Use Lark-friendly formatting** — `━` dividers, emoji section headers, bullet lists
+3. **Copy text verbatim** from `generated/<slug>/x-thread.md` and `generated/<slug>/xiaohongshu.md` — no paraphrasing, don't re-write, just extract
+4. **If a platform failed quality-gate**, say so clearly at the top, skip its content block
+5. **If blog publish failed**, show the error + exact command for the user to fix or retry
+6. **Keep the whole message under 8000 characters** if possible. If x-thread + 小红书 together exceed this, split into 2 consecutive Lark messages with clear "接上 1/2" markers.
+
+---
+
+## Failure handling
+
+If **blog-publisher fails to push** (403 / auth / network):
+
+1. **Do NOT abort the pipeline silently.** Continue to publish-dispatcher to at least write the queue.
+2. Update `contents/<slug>/meta.json` with:
+   ```json
+   "published": {
+     "blog": "failed",
+     "blog_failure_reason": "git push 403 - likely PAT missing write permission for blog repo",
+     "blog_retry_command": "cd /home/admin/blog && git push origin main"
+   }
+   ```
+3. In the Lark report, flag the blog failure clearly and give the user a one-line fix:
+   ```
+   ⚠️ Blog 生成完了但 push 失败：
+   原因：PAT 对 blog 仓库可能没有 Contents: Read and write 权限
+   修复：去 github.com/settings/tokens 检查 fine-grained PAT，
+        确认 blog repo 的 Contents = Read and write
+   修完后告诉我，我 retry push。
+   ```
+
+If **any other skill fails**: similar pattern. Record to meta.json, keep going, report in final Lark message.
+
+---
+
+## Fallback to normal skills
 
 If the user's intent is NOT content-creation (e.g. general question, technical help, memory query), use the regular OpenClaw skills (agent-memory, tavily-search, searxng, etc.). Don't force everything into Content OS.
