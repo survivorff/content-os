@@ -110,17 +110,16 @@ quality-gate 跑完，会停在一份 `quality-report.md`：
 
 你不在电脑前时（谈业务、地铁上、咖啡馆），靠一段消息把整条流水线启动。
 
-**MVP 路径（刻意简单版）**：
+**当前生产链路（已跑通）**：
 
 ```
-你 → Telegram Bot → GitHub → Actions 跑 agent → 产物 commit 回仓库
+你 (Lark DM) → OpenClaw gateway @ 阿里云 VM → content-os skills + DeepSeek V4 Pro → 成品 + git push
 ```
 
-- **MVP 方案设计**：[`docs/mvp-demo.md`](docs/mvp-demo.md) — 完整架构 + 需要你做的准备清单
-- **阶段 1 搭建指南（先跑 Actions，不搭 Bot）**：[`docs/setup-stage1.md`](docs/setup-stage1.md)
-- **备选路径和长期架构**：[`docs/remote-trigger.md`](docs/remote-trigger.md)
-
-**推荐路线**：先做阶段 1（GitHub Actions 跑 pipeline）稳定 3-5 次后，再加 TG Bot。不要一次搭完。
+- **部署状态快照**：[`docs/deployment-status.md`](docs/deployment-status.md)
+- **部署 playbook**：[`docs/setup-openclaw.md`](docs/setup-openclaw.md)
+- **备用路径（GitHub Actions）**：[`docs/setup-stage1.md`](docs/setup-stage1.md)
+- **长期架构备选**：[`docs/remote-trigger.md`](docs/remote-trigger.md) / [`docs/mvp-demo.md`](docs/mvp-demo.md)
 
 ---
 
