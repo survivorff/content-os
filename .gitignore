@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# OS
+.DS_Store
+
+# 临时草稿（本地写但不想提交的）
+contents/drafts/
