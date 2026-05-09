@@ -1,0 +1,91 @@
+name: content-os agent
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'inbox/**.md'
+  workflow_dispatch:
+    inputs:
+      inbox_file:
+        description: 'Path to inbox file (e.g. inbox/2026-05-09-foo.md)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect inbox files to process
+        id: detect
+        run: |
+          if [ -n "${{ github.event.inputs.inbox_file }}" ]; then
+            echo "files=${{ github.event.inputs.inbox_file }}" >> $GITHUB_OUTPUT
+          else
+            # Look at files added in the latest push
+            CHANGED=$(git diff --name-only --diff-filter=A HEAD^ HEAD | grep -E '^inbox/.*\.md$' || true)
+            echo "files=$CHANGED" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bail if nothing to do
+        if: steps.detect.outputs.files == ''
+        run: |
+          echo "No new inbox files detected. Exiting."
+          exit 0
+
+      - name: Setup Node
+        if: steps.detect.outputs.files != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Agent SDK
+        if: steps.detect.outputs.files != ''
+        run: |
+          npm init -y
+          npm install @anthropic-ai/sdk
+
+      - name: Run agent pipeline
+        if: steps.detect.outputs.files != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          for file in ${{ steps.detect.outputs.files }}; do
+            echo "Processing: $file"
+            node scripts/run-pipeline.mjs "$file"
+          done
+
+      - name: Commit outputs
+        if: steps.detect.outputs.files != ''
+        run: |
+          git config user.name "content-os-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add contents/ generated/ queue/ || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "agent: auto pipeline for ${{ steps.detect.outputs.files }}"
+            git push
+          fi
+
+      - name: Notify Telegram (optional)
+        if: steps.detect.outputs.files != '' && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          MSG="✅ content-os pipeline finished for: ${{ steps.detect.outputs.files }}%0ACommit: $COMMIT_URL"
+          curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
+            -d "chat_id=$TELEGRAM_CHAT_ID" \
+            -d "text=$MSG" \
+            -d "parse_mode=HTML" || true

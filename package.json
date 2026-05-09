@@ -1,0 +1,17 @@
+{
+  "name": "content-os",
+  "version": "0.1.0",
+  "description": "Content OS — agent skills orchestrator for multi-platform publishing",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "pipeline": "node scripts/run-pipeline.mjs",
+    "pipeline:example": "node scripts/run-pipeline.mjs inbox/2026-05-09-example.md"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.34.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

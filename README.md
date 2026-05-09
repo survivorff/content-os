@@ -1,226 +1,237 @@
 # Content OS
 
-**你的多平台内容发布操作系统。**
+**一个想法，多个 agent skills，一次产出全平台内容。**
 
-一个人一篇长文，自动拆成博客 + X Thread + 小红书图文 + 抖音脚本，按时间自动发布到对应平台。
-
----
-
-## 为什么存在
-
-做技术 IP 最大的阻力不是"没东西写"，而是**"写完了还要发 N 个平台"**。
-
-一篇文章的完整传播流程：
-- 写一篇深度长文（博客）
-- 拆成 8-12 条的 X Thread
-- 改写成 3-5 张的小红书图文
-- 录一段 2-3 分钟的抖音脚本
-- 各个平台挑合适的时间发布
-- 跟踪互动数据
-
-如果都靠手动，**一篇文章要折腾 3-5 小时**。持续不下去。
-
-这个项目解决这个问题：**一次写作，自动多平台**。
+你不写脚本、不填模板、不开 N 个工具。你只抛一句话或一段思考，由 orchestrator agent（大脑）根据上下文调用不同 skill（角色）完成从选题到多平台改写的全流程。
 
 ---
 
-## 核心理念
+## 核心理念：Agent Skills 架构
+
+借鉴 Anthropic Agent Skills 的形态：
+
+- **一个大脑**：`AGENTS.md`，orchestrator 的工作手册。看见想法 → 决定要哪些 skill → 按顺序调用 → 汇合结果。
+- **一堆技能**：`skills/<skill-name>/SKILL.md`，每个 skill 是一个独立角色（选题侦察员、博客写手、Thread 拆分官、小红书编辑、质量审稿…）。每个 SKILL.md 只装入口说明，细节用渐进披露（progressive disclosure）放在同目录的 reference 文件里。
+- **你只管抛想法**：想到什么就往 `inbox/` 扔一句话、一段语音转文字、一张截图的描述。大脑接管剩下的。
 
 ```
-源头只有一个（Source of Truth）
-    │
-    ▼
-┌────────────────────────────────────────┐
-│     一篇 Markdown 文件（唯一来源）      │
-│     /contents/2026-05-10-xxx.md        │
-└────────────────────────────────────────┘
-    │
-    ▼
-┌────────────────────────────────────────┐
-│          自动生成多平台版本              │
-├────────────────────────────────────────┤
-│  博客版（长文）                          │
-│  X Thread（8-12 推）                     │
-│  小红书（图文，3-5 张）                   │
-│  抖音（口播脚本）                        │
-│  即刻（中等篇幅）                        │
-└────────────────────────────────────────┘
-    │
-    ▼
-┌────────────────────────────────────────┐
-│         各平台自动发布（计划）            │
-├────────────────────────────────────────┤
-│  blog.frankfu.cloud（即时）             │
-│  @FrankFu2262 X（按排期）                │
-│  小红书（手动，SDK 难用）                │
-│  抖音（手动，同上）                      │
-└────────────────────────────────────────┘
+你抛想法
+   │
+   ▼
+inbox/2026-05-09-random-thought.md          ← 你只写这一个
+   │
+   ▼
+┌─────────────────────────────────────────┐
+│  Orchestrator（AGENTS.md 里的大脑）       │
+│  读想法 → 匹配 skills → 编排流程           │
+└─────────────────────────────────────────┘
+   │
+   ├──▶ skills/topic-scout          （是不是值得写？）
+   ├──▶ skills/outline-architect    （拆骨架）
+   ├──▶ skills/blog-writer          （写长文）
+   ├──▶ skills/x-thread-maker       （拆推文）
+   ├──▶ skills/xiaohongshu-editor   （小红书改写）
+   ├──▶ skills/douyin-scripter      （口播脚本）
+   ├──▶ skills/hook-polisher        （打磨开头）
+   ├──▶ skills/quality-gate         （质量终审）
+   └──▶ skills/publish-dispatcher   （排期 + 调起发布）
+   │
+   ▼
+contents/<slug>/  +  generated/<slug>/<platform>.md  +  queue/
 ```
-
-你只做三件事：
-1. 写 **一个** Markdown 源文件
-2. 设定发布时间
-3. 确认自动生成的多平台版本
-
-其他全自动。
 
 ---
 
-## 项目结构
+## 快速上手：5 步走通一次
+
+不用装任何东西。在你的 AI agent（Claude Code / Cursor / Kiro）里操作。
+
+### Step 1 — 扔一个想法进 inbox
+
+```bash
+# 复制模板（可选）
+cp templates/idea-capture.md inbox/$(date +%Y-%m-%d)-my-idea.md
+
+# 或者极简版：直接写三行
+cat > inbox/$(date +%Y-%m-%d)-my-idea.md <<'EOF'
+今天 debug 发现 Solana RPC 全是坑。
+想写一篇"生产环境踩过的 Solana RPC 坑"。
+独特视角：交易所级别的高并发经历。
+EOF
+```
+
+### Step 2 — 召唤大脑
+
+在 chat 里说一句：
+
+> 按 content-os/AGENTS.md 处理 `inbox/2026-05-09-example.md`。
+
+大脑（orchestrator）会自己读 AGENTS.md，开始编排 skills。
+
+### Step 3 — 在"决策点 ①"确认 outline
+
+大脑跑完 topic-scout + outline-architect 会停下来，把 `contents/<slug>/outline.md` 打给你看。
+
+你只需要回复：
+- "OK" → 继续
+- "第 2 点改成 XXX" → 大脑回去调整
+- "换反差型 hook" → 大脑换
+
+### Step 4 — 让大脑自己跑到 quality-gate
+
+你确认 outline 后，大脑会**连续**跑：
+- blog-writer
+- x-thread-maker / xiaohongshu-editor / douyin-scripter（并行，按 platforms）
+- hook-polisher（单独打磨开头）
+- quality-gate（按 checklist 审）
+
+中间不打扰你。
+
+### Step 5 — 在"决策点 ②"决定发不发
+
+quality-gate 跑完，会停在一份 `quality-report.md`：
+
+- 全 approved → 大脑直接调 publish-dispatcher 写入 `queue/schedule.json`，给你一份调度总结
+- 任何 rejected → 停下来给你 3 个选项（我来改 / 你回源改 / 强制通过）
+
+---
+
+## 实战示例：看一次完整跑通
+
+已经有一个跑完的样例沉淀在仓库里，你可以直接翻文件感受节奏：
+
+- 输入：[`inbox/2026-05-09-example.md`](inbox/2026-05-09-example.md)
+- 每个 skill 的产物：[`contents/solana-rpc-production-truths/`](contents/solana-rpc-production-truths/) + [`generated/solana-rpc-production-truths/`](generated/solana-rpc-production-truths/)
+- 逐步讲解：[`docs/walkthrough-example.md`](docs/walkthrough-example.md)
+
+---
+
+## 远程指挥：在外面也能把内容团队开起来
+
+你不在电脑前时（谈业务、地铁上、咖啡馆），靠一段消息把整条流水线启动。
+
+**MVP 路径（刻意简单版）**：
+
+```
+你 → Telegram Bot → GitHub → Actions 跑 agent → 产物 commit 回仓库
+```
+
+- **MVP 方案设计**：[`docs/mvp-demo.md`](docs/mvp-demo.md) — 完整架构 + 需要你做的准备清单
+- **阶段 1 搭建指南（先跑 Actions，不搭 Bot）**：[`docs/setup-stage1.md`](docs/setup-stage1.md)
+- **备选路径和长期架构**：[`docs/remote-trigger.md`](docs/remote-trigger.md)
+
+**推荐路线**：先做阶段 1（GitHub Actions 跑 pipeline）稳定 3-5 次后，再加 TG Bot。不要一次搭完。
+
+---
+
+## 目录
 
 ```
 content-os/
-├── contents/                    # 内容源文件（你唯一要写的地方）
-│   └── YYYY-MM-DD-slug.md       # 每篇一个文件
+├── AGENTS.md                 # ← 大脑：orchestrator 的工作指令（必读）
 │
-├── generated/                   # 自动生成的多平台版本
-│   └── YYYY-MM-DD-slug/
-│       ├── blog.md              # 博客版
-│       ├── x-thread.md          # X Thread 版
-│       ├── xiaohongshu.md       # 小红书图文版
-│       ├── douyin-script.md     # 抖音脚本版
-│       └── meta.json            # 元信息（发布状态等）
+├── skills/                   # ← 所有 agent skills
+│   ├── topic-scout/
+│   │   ├── SKILL.md          # 入口（必读）
+│   │   ├── reference/        # 渐进披露的参考
+│   │   └── examples/
+│   ├── outline-architect/
+│   ├── blog-writer/
+│   ├── x-thread-maker/
+│   ├── xiaohongshu-editor/
+│   ├── douyin-scripter/
+│   ├── hook-polisher/
+│   ├── quality-gate/
+│   └── publish-dispatcher/
 │
-├── lib/                         # 生成器脚本
-│   ├── generate.py              # 主入口
-│   ├── generators/
-│   │   ├── blog.py              # 博客版生成
-│   │   ├── x_thread.py          # X Thread 生成
-│   │   ├── xiaohongshu.py       # 小红书生成
-│   │   └── douyin.py            # 抖音生成
-│   └── utils/
-│       ├── llm.py               # LLM 调用封装
-│       ├── publisher.py         # 发布到各平台
-│       └── tracker.py           # 状态追踪
+├── inbox/                    # ← 你唯一要写的地方：一句话想法
+│   └── YYYY-MM-DD-*.md
 │
-├── steering/                    # 各平台的风格指南（prompt）
-│   ├── blog-style.md            # 博客的风格
-│   ├── x-thread-style.md        # X Thread 的风格
-│   ├── xiaohongshu-style.md     # 小红书的风格
-│   └── douyin-style.md          # 抖音的风格
+├── contents/                 # 大脑确认选题后沉淀的源文稿
+│   └── <slug>/
+│       ├── source.md         # 最终的 Markdown 源
+│       └── meta.json         # 追踪状态
 │
-├── templates/                   # 源文件模板
-│   └── content-template.md      # 写新内容时的模板
+├── generated/                # 各 skill 产出的平台版本
+│   └── <slug>/
+│       ├── blog.md
+│       ├── x-thread.md
+│       ├── xiaohongshu.md
+│       └── douyin-script.md
 │
-├── .github/workflows/           # GitHub Actions 自动化
-│   ├── generate.yml             # push 时自动生成多平台版本
-│   └── publish-x.yml            # 按时发 X（复用 x-auto-poster 逻辑）
+├── queue/                    # publish-dispatcher 维护的发布队列
+│   └── schedule.json
 │
-├── docs/                        # 文档
-│   ├── how-to-write.md          # 怎么写源文件
-│   ├── how-to-publish.md        # 怎么触发发布
-│   └── roadmap.md               # 后续规划
+├── templates/
+│   └── idea-capture.md       # inbox 用的最小模板（可选）
 │
-└── README.md                    # 本文件
+└── docs/
+    ├── how-it-works.md       # 工作流详解
+    ├── how-to-add-a-skill.md # 加新 skill 的范式
+    └── why-agents.md         # 为什么用 agent skills 而不是脚本
 ```
 
 ---
 
-## 工作流示例
+## 最小使用示例
 
-### 1. 写源文件
+### 1. 抛一个想法
 
 ```bash
-# 复制模板
-cp templates/content-template.md contents/2026-05-10-my-new-post.md
+cat > inbox/2026-05-09-solana-rpc.md <<'EOF'
+# 想法
 
-# 编辑
-vim contents/2026-05-10-my-new-post.md
+今天 debug 发现 Solana 的 RPC 真是一堆坑。
+getProgramAccounts 慢得离谱，getSignaturesForAddress 还有分页坑。
+感觉能写一篇"生产环境踩过的 Solana RPC 坑"。
+
+目标读者：做 Solana dApp 后端的工程师。
+我的独特视角：交易所级别的高并发 + 真实故障经历。
+EOF
 ```
 
-源文件格式：
+### 2. 召唤大脑
 
-```markdown
----
-title: 我的新文章
-slug: my-new-post
-date: 2026-05-10
-tags: [web3, solana]
-summary: 一句话摘要，用于 OG 图和 Twitter 卡片
-schedule:
-  blog: 2026-05-10T10:00:00+08:00
-  x: 2026-05-10T20:00:00+08:00
-  xiaohongshu: 2026-05-11T12:00:00+08:00
-  douyin: 2026-05-11T20:00:00+08:00
-platforms: [blog, x, xiaohongshu]  # 不想发抖音就不列
----
+在你的 AI agent（Claude Code、Cursor、Kiro…）里：
 
-（正文 Markdown）
-```
+> 按 `content-os/AGENTS.md` 的工作流处理 `inbox/2026-05-09-solana-rpc.md`。
 
-### 2. 推送后自动生成
+### 3. 大脑自动做的事
 
-```bash
-git add contents/2026-05-10-my-new-post.md
-git commit -m "content: my new post"
-git push
-```
+1. 读 `AGENTS.md` 看自己该怎么干
+2. 调 `skills/topic-scout` → 判断值不值得写、目标受众、核心 takeaway
+3. 调 `skills/outline-architect` → 拆成 3-5 个核心论点
+4. 你在 terminal 确认 outline
+5. 调 `skills/blog-writer` → 写长文 `generated/<slug>/blog.md`
+6. 并行调 `skills/x-thread-maker` / `xiaohongshu-editor` / `douyin-scripter`
+7. 调 `skills/hook-polisher` → 打磨每个版本的开头
+8. 调 `skills/quality-gate` → 按 checklist 终审，不合格打回
+9. 调 `skills/publish-dispatcher` → 写入 `queue/schedule.json`，等 Actions 或你手动触发
 
-GitHub Actions 自动：
-1. 检测新 content
-2. 调用 LLM 生成各平台版本到 `generated/`
-3. commit 回仓库
-
-### 3. 你 review
-
-```bash
-git pull
-# 看 generated/2026-05-10-my-new-post/ 下的各个版本
-# 有需要微调的就改一下
-```
-
-### 4. 自动发布
-
-- **博客**：到时间自动同步到 blog 仓库并部署
-- **X**：到时间自动通过 X API 发 Thread（需要 credits）
-- **小红书 / 抖音**：目前没有稳定的开放 API，手动复制发
+全程你只在两个点介入：
+- **step 4**：outline 确认
+- **step 8 之后**：拿到终审 diff，决定发不发
 
 ---
 
-## 启用进度
+## 和旧版 content-os 的区别
 
-| 平台 | 状态 | 说明 |
-|------|------|------|
-| 博客生成器 | 🚧 开发中 | 复用现有 blog/ 目录 |
-| X Thread 生成器 | 🚧 开发中 | 复用 x-auto-poster |
-| 小红书生成器 | 🚧 开发中 | 只生成，手动发 |
-| 抖音生成器 | 🚧 开发中 | 只生成脚本 |
-| 自动发布 X | ⏸️ 待启用 | 等 X API credits |
-| 自动同步博客 | ⏸️ 待启用 | 等生成器稳定 |
-
----
-
-## 设计哲学
-
-1. **Markdown 为王** — 所有内容都是纯文本，方便版本控制
-2. **LLM 做重活** — 多平台改写让 AI 做，人做质量把关
-3. **推送即触发** — 所有动作绕不开 git，减少需要学习的工具
-4. **Human-in-the-loop** — 生成不等于发布，你始终有最终决定权
-5. **平台独立性** — 每个平台的生成器独立，加新平台不影响老的
+| 维度 | 旧版（脚本流水线） | 新版（Agent Skills） |
+|---|---|---|
+| 你写什么 | 完整源文 + frontmatter + 排期 | 一段想法 |
+| 流程谁编排 | 一个 `generate.py` 脚本 | Orchestrator agent（大脑） |
+| 改写逻辑在哪 | `lib/generators/*.py` 硬编码 | `skills/<name>/SKILL.md` 可独立演化 |
+| 加新平台成本 | 改脚本、加 prompt、调测 | 新建一个 skill 目录 |
+| 风格迭代成本 | 改 prompt 看效果 | 改 skill 的 reference，下次调用自动生效 |
+| 你的心智负担 | "我得把这段改成 Thread" | "我有个想法" |
 
 ---
 
-## 下一步（Roadmap）
+## 下一步
 
-- [ ] 定义各平台的 style guide（`steering/`）
-- [ ] 实现博客生成器（最简单，复制 + 改 metadata）
-- [ ] 实现 X Thread 生成器（LLM 改写）
-- [ ] 实现小红书生成器（LLM 改写 + 标签建议）
-- [ ] 实现抖音脚本生成器（LLM 改写成口播）
-- [ ] 实现发布追踪（meta.json 记录每个平台的发布状态）
-- [ ] 实现自动发布到 blog 和 X
-- [ ] 做一个简单的 dashboard 展示待发和已发的内容
+1. 读 `AGENTS.md` 理解大脑怎么工作
+2. 读 `skills/*/SKILL.md` 看每个角色的定位
+3. 往 `inbox/` 扔第一个想法，让大脑跑一遍
+4. 有不顺的地方，**改 skill 而不是改想法**
 
----
-
-## 长远愿景
-
-当这个系统成熟后：
-
-- 你只需要写 1-2 篇 **源文件** / 月
-- 系统生成 5+ 个平台版本
-- 每个平台每周 1-2 次发布
-- 你一个月发布 20+ 条高质量内容
-- **100% 的内容来自同一个大脑，零重复劳动**
-
-这就是"个人内容工作室"的标准配置。
+长期目标：把整个系统养成你专属的内容工作室。每个 skill 越练越懂你，最终一句话进、成品出。

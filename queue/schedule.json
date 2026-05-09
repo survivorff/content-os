@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "updated_at": "2026-05-09T18:05:00+08:00",
+  "queue": [
+    {
+      "id": "solana-rpc-production-truths-blog",
+      "slug": "solana-rpc-production-truths",
+      "platform": "blog",
+      "mode": "auto",
+      "scheduled_at": "2026-05-12T10:00:00+08:00",
+      "status": "pending",
+      "attempted_at": null,
+      "executed_at": null,
+      "error": null,
+      "reminder": null,
+      "external_ref": null
+    },
+    {
+      "id": "solana-rpc-production-truths-x-thread",
+      "slug": "solana-rpc-production-truths",
+      "platform": "x-thread",
+      "mode": "manual",
+      "scheduled_at": "2026-05-12T20:00:00+08:00",
+      "status": "pending",
+      "attempted_at": null,
+      "executed_at": null,
+      "error": null,
+      "reminder": "X API 暂无 credits，到时会打印 10 条推文供手动发布",
+      "external_ref": null
+    },
+    {
+      "id": "solana-rpc-production-truths-xiaohongshu",
+      "slug": "solana-rpc-production-truths",
+      "platform": "xiaohongshu",
+      "mode": "manual",
+      "scheduled_at": "2026-05-13T12:00:00+08:00",
+      "status": "pending",
+      "attempted_at": null,
+      "executed_at": null,
+      "error": null,
+      "reminder": "到时提醒：复制 generated/solana-rpc-production-truths/xiaohongshu.md 标题+正文+标签到小红书 App，按图文建议准备 1 张封面图",
+      "external_ref": null
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "slug": "solana-rpc-production-truths",
+  "source_inbox": "inbox/2026-05-09-example.md",
+  "scout_verdict": "yes",
+  "created_at": "2026-05-09",
+  "platforms": ["blog", "x-thread", "xiaohongshu"],
+  "pipeline": {
+    "topic_scout": "2026-05-09T15:00:00+08:00",
+    "outline_architect": "2026-05-09T15:10:00+08:00",
+    "outline_approved_by_author": "2026-05-09T15:25:00+08:00",
+    "blog_written": "2026-05-09T16:20:00+08:00",
+    "x_thread_written": "2026-05-09T16:45:00+08:00",
+    "xiaohongshu_written": "2026-05-09T17:00:00+08:00",
+    "douyin_written": "skipped",
+    "hook_polished": "2026-05-09T17:30:00+08:00",
+    "quality_gated": "2026-05-09T18:00:00+08:00"
+  },
+  "hook_polisher_log": {
+    "ran_at": "2026-05-09T17:30:00+08:00",
+    "blog": {"status": "pass", "reason": "故事钩已够强，无需改动"},
+    "x-thread-1": {"status": "polished", "before": "罪魁祸首不是合约 bug", "after": "罪魁祸首不是合约"},
+    "xiaohongshu-title": {"status": "pass", "reason": "标题已有数字+身份+悬念"},
+    "xiaohongshu-opening": {"status": "pass", "reason": ""},
+    "douyin": {"status": "skipped", "reason": "不在 platforms"}
+  },
+  "quality_gate": {
+    "blog": {
+      "status": "approved",
+      "checked_at": "2026-05-09T18:00:00+08:00",
+      "fails": [],
+      "warns": []
+    },
+    "x-thread": {
+      "status": "approved_with_notes",
+      "checked_at": "2026-05-09T18:00:00+08:00",
+      "fails": [],
+      "warns": [
+        {
+          "type": "tweet-near-char-limit",
+          "location": "tweet 3",
+          "current": 238,
+          "limit": 260,
+          "suggestion": "拆条或改写压缩 3-5 字符"
+        }
+      ]
+    },
+    "xiaohongshu": {
+      "status": "approved_with_notes",
+      "checked_at": "2026-05-09T18:00:00+08:00",
+      "fails": [],
+      "warns": [
+        {
+          "type": "term-translation-could-be-clearer",
+          "location": "谎言 2 段落",
+          "term": "fork / 叛变节点",
+          "suggestion": "改为 '暂时没同步的节点的旧数据（Solana 里叫 fork）'"
+        }
+      ]
+    }
+  },
+  "cross_platform_check": {
+    "status": "consistent",
+    "checked_at": "2026-05-09T18:00:00+08:00",
+    "issues": []
+  },
+  "published": {
+    "blog": null,
+    "x-thread": null,
+    "xiaohongshu": null
+  }
+}

@@ -1,5 +1,11 @@
 # Secrets
 .env
+.env.local
+
+# Node
+node_modules/
+npm-debug.log*
+package-lock.json
 
 # Python
 __pycache__/
@@ -13,3 +19,6 @@ venv/
 
 # 临时草稿（本地写但不想提交的）
 contents/drafts/
+
+# 本地测试产物
+*.log
