@@ -1,0 +1,39 @@
+{
+  "slug": "multi-chain-exchange-pitfalls",
+  "source_inbox": "inbox/2026-05-09-multi-chain-web3-pitfalls.md",
+  "scout_verdict": "yes",
+  "created_at": "2026-05-09",
+  "platforms": ["blog", "x-thread", "xiaohongshu"],
+  "pipeline": {
+    "topic_scout": "2026-05-09T17:00:00+08:00",
+    "outline_architect": "2026-05-09T17:35:00+08:00",
+    "blog_written": "2026-05-09T17:42:00+08:00",
+    "x_thread_written": "2026-05-09T17:45:00+08:00",
+    "xiaohongshu_written": "2026-05-09T17:45:00+08:00",
+    "hook_polished": "2026-05-09T17:45:00+08:00",
+    "quality_gated": "2026-05-09T17:48:00+08:00",
+    "blog_published": "2026-05-09T18:22:00+08:00"
+  },
+  "hook_polisher_log": {
+    "ran_at": "2026-05-09T17:45:00+08:00",
+    "blog": {"status": "pass", "reason": "数据钩已有具体数字(8-12周/5倍)、身份锚定、反差"},
+    "x-thread": {"status": "pass", "reason": "数据震撼够强，<180字，有身份+反差"},
+    "xiaohongshu-title": {"status": "pass", "reason": "24字，带数字/身份/悬念"},
+    "xiaohongshu-opening": {"status": "pass"},
+    "douyin": {"status": "skipped", "reason": "不在platforms"}
+  },
+  "quality_gate": {
+    "blog": {"status": "approved_with_notes", "warns": [{"type": "last-h2-short", "note": "CTA 段偏短但合理"}]},
+    "x-thread": {"status": "approved", "warns": []},
+    "xiaohongshu": {"status": "approved", "warns": []}
+  },
+  "cross_platform_check": {"status": "consistent", "issues": []},
+  "published": {
+    "blog": "2026-05-09T18:22:00+08:00",
+    "blog_url": "https://blog.frankfu.cloud/posts/multi-chain-exchange-pitfalls/",
+    "blog_commit": "github.com/survivorff/blog/commit/25f6ca9",
+    "x-thread": "pending_manual",
+    "xiaohongshu": "pending_manual",
+    "douyin": "skipped"
+  }
+}
